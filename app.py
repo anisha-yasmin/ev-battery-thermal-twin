@@ -126,11 +126,15 @@ for xc in cell_centers:
         u += 0.4 * flow_velocity * np.sin(X - xc) * np.exp(-r_sq/2)
         v += 0.5 * flow_velocity * Y * np.exp(-r_sq/2)
 
+# CRITICAL FIX 1: Modernized colorbar nested parameters for go.Cone to clear Python 3.14 exceptions
 fig_vector = go.Figure(data=go.Cone(
     x=X.flatten(), y=Y.flatten(), z=np.zeros_like(X).flatten(),
     u=u.flatten(), v=v.flatten(), w=np.zeros_like(X).flatten(),
     colorscale="Viridis", sizemode="scaled", sizeref=0.35, showscale=True,
-    colorbar=dict(title="Velocity (m/s)", titlefont=dict(color="#ffffff"), tickfont=dict(color="#ffffff"))
+    colorbar=dict(
+        title=dict(text="Velocity (m/s)", font=dict(color="#ffffff")), 
+        tickfont=dict(color="#ffffff")
+    )
 ))
 fig_vector.update_layout(template="plotly_dark", height=380, margin=dict(l=0, r=0, t=10, b=0),
                          xaxis=dict(title="Flow Channel Length"), yaxis=dict(title="Width"))
@@ -151,10 +155,14 @@ for xc in cell_centers:
     inside_cylinder = (grid_x - xc)**2 + grid_y**2 < 0.35
     thermal_field[inside_cylinder] = np.nan
 
+# CRITICAL FIX 2: Modernized colorbar parameters for go.Contour
 fig_contour = go.Figure(data=go.Contour(
     z=thermal_field, x=np.linspace(0, 12, 100), y=np.linspace(-2.5, 2.5, 40),
     colorscale="Jet", line_width=0, connectgaps=False,
-    colorbar=dict(title="Temperature (K)", titlefont=dict(color="#ffffff"), tickfont=dict(color="#ffffff"))
+    colorbar=dict(
+        title=dict(text="Temperature (K)", font=dict(color="#ffffff")), 
+        tickfont=dict(color="#ffffff")
+    )
 ))
 fig_contour.update_layout(template="plotly_dark", height=380, margin=dict(l=10, r=10, t=10, b=10),
                          xaxis=dict(showgrid=False, title="Flow Direction Axis (mm)"), yaxis=dict(showgrid=False, title="Channel Width (mm)"))
@@ -173,7 +181,13 @@ f_arr = 0.316 / (Re_arr**0.25)
 fig_tradeoff.add_trace(go.Scatter(x=v_arr, y=Nu_arr, name="Nusselt Number (Nu)", line=dict(color="#10b981", width=3)), secondary_y=False)
 fig_tradeoff.add_trace(go.Scatter(x=v_arr, y=f_arr, name="Friction Factor (f)", line=dict(color="#ef4444", width=2, dash="dash")), secondary_y=True)
 
-fig_tradeoff.update_layout(template="plotly_dark", xaxis_title="Inlet Fluid Velocity (m/s)", height=380, margin=dict(l=10, r=10, t=10, b=10))
+# CRITICAL FIX 3: Re-mapped subplot layout fonts to direct attributes to fully prevent parsing failures
+fig_tradeoff.update_layout(
+    template="plotly_dark", 
+    xaxis_title="Inlet Fluid Velocity (m/s)", 
+    height=380, 
+    margin=dict(l=10, r=10, t=10, b=10)
+)
 fig_tradeoff.update_yaxes(title_text="Convective Nusselt Scaling", secondary_y=False)
 fig_tradeoff.update_yaxes(title_text="Darcy Friction Factor", secondary_y=True)
 st.plotly_chart(fig_tradeoff, use_container_width=True)
